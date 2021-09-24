@@ -5,7 +5,7 @@ from MLUtils import *
 
 st.title('AI, OS and RE for LUAD')  # 算法名称 and XXX
 
-gnb_list = []
+# gnb_list = []
 adab_list = []
 
 FIXED_TRAIN_FILENAME = "train_OS_RE.csv"
@@ -30,7 +30,7 @@ def setup_selectors():
 
         for i, c in enumerate(COL_INPUT):
             with cols[i % col_num]:
-                num_input = st.number_input(f"Please input {c}", value=0, format="%d", key=c)
+                num_input = st.number_input(f"Please input {c}", value=0.00, format="%.2f", key=c)
                 vars.append(num_input)
 
         with cols[0]:
@@ -43,7 +43,8 @@ def setup_selectors():
 # 对上传的文件进行处理和展示
 def do_processing():
     global COL_Y
-    global gnb_list, adab_list
+    # global gnb_list
+    global adab_list
     pocd_list = read_csv(FIXED_TRAIN_FILENAME, y_num=FIXED_TRAIN_Y_NUM)
     # print(pocd_list)  # debug
     # print(COL_Y)  # debug
@@ -52,9 +53,11 @@ def do_processing():
         Y = str(pocd.columns[-1])
         COL_Y.append(Y)
         st.text(f"Dataset Description (Y: {Y})")
-        st.write(pocd.describe())
+        st.write(pocd.describe().style.format("{:7,.2f}"))
+        # st.write(pocd.describe())
         if st.checkbox('Show detail of this dataset', key=f"cb_show_detail_{Y.lower()}"):
-            st.write(pocd)
+            st.write(pocd.style.format("{:7,.2f}"))
+            # st.write(pocd)
 
         # 分割数据
         X_train, X_test, y_train, y_test = do_split_data(pocd)
@@ -63,40 +66,40 @@ def do_processing():
         col1, col2 = st.columns(2)
 
         # 准备模型
-        gnb = GaussianNB()
-        gnb_list.append(gnb)
+        # gnb = GaussianNB()
+        # gnb_list.append(gnb)
         adab = AdaBoostClassifier(n_estimators=50, learning_rate=1.0, algorithm='SAMME.R', random_state=1)
         adab_list.append(adab)
 
         # 模型训练、显示结果
         with st.spinner("Training, please wait..."):
-            gnb_result = model_fit_score(gnb, X_train, y_train)
+            # gnb_result = model_fit_score(gnb, X_train, y_train)
             adab_result = model_fit_score(adab, X_train, y_train)
         with col1:
             st.text("Training Result")
-            msg = model_print(gnb_result, "GaussianNB - Train")
-            st.write(msg)
+            # msg = model_print(gnb_result, "GaussianNB - Train")
+            # st.write(msg)
             msg = model_print(adab_result, "AdaBoost - Train")
             st.write(msg)
             # 训练画图
             fig_train = plt_roc_auc([
-                (gnb_result, 'GaussianNB',),
+                # (gnb_result, 'GaussianNB',),
                 (adab_result, 'AdaBoost',),
             ], 'Train ROC')
             st.pyplot(fig_train)
         # 模型测试、显示结果
         with st.spinner("Testing, please wait..."):
-            gnb_test_result = model_score(gnb, X_test, y_test)
+            # gnb_test_result = model_score(gnb, X_test, y_test)
             adab_test_result = model_score(adab, X_test, y_test)
         with col2:
             st.text("Testing Result")
-            msg = model_print(gnb_test_result, "GaussianNB - Test")
-            st.write(msg)
+            # msg = model_print(gnb_test_result, "GaussianNB - Test")
+            # st.write(msg)
             msg = model_print(adab_test_result, "AdaBoost - Test")
             st.write(msg)
             # 测试画图
             fig_test = plt_roc_auc([
-                (gnb_test_result, 'GaussianNB',),
+                # (gnb_test_result, 'GaussianNB',),
                 (adab_test_result, 'AdaBoost',),
             ], 'Validate ROC')
             st.pyplot(fig_test)
@@ -105,23 +108,25 @@ def do_processing():
 # 对生成的预测数据进行处理
 def do_predict():
     global COL_Y, vars
-    global gnb_list, adab_list
+    # global gnb_list
+    global adab_list
 
     # 处理生成的预测数据的输入
     pocd_predict = pd.DataFrame(data=[vars], columns=COL_INPUT)
     pocd_predict = do_base_preprocessing(pocd_predict, with_y=False, y_num=FIXED_TRAIN_Y_NUM)
     st.text("Preview for detail of this predict data")
-    st.write(pocd_predict)
+    st.write(pocd_predict.style.format("{:7,.2f}"))
+    # st.write(pocd_predict)
     pocd_predict = do_predict_preprocessing(pocd_predict)
 
     # 进行预测并输出
-    for ng, gnb in enumerate(gnb_list):
-        Y = COL_Y[ng]
-        # GaussianNB
-        pr = gnb.predict(pocd_predict)
-        pr = pr.astype(np.int)
-        st.markdown(r"$\color{red}{GaussianNB}$ $\color{red}{Predict}$ $\color{red}{result}$ $\color{red}{" + str(
-            Y) + r"}$ $\color{red}{is}$ $\color{red}{" + str(pr[0]) + "}$")
+    # for ng, gnb in enumerate(gnb_list):
+    #     Y = COL_Y[ng]
+    #     # GaussianNB
+    #     pr = gnb.predict(pocd_predict)
+    #     pr = pr.astype(np.int)
+    #     st.markdown(r"$\color{red}{GaussianNB}$ $\color{red}{Predict}$ $\color{red}{result}$ $\color{red}{" + str(
+    #         Y) + r"}$ $\color{red}{is}$ $\color{red}{" + str(pr[0]) + "}$")
     for ng, adab in enumerate(adab_list):
         Y = COL_Y[ng]
         # AdaBoost
